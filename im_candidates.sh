@@ -1,36 +1,38 @@
 #! /bin/sh
 
-# TODO: add description
+out_format="png"
 
-if [ "${#}" != 1 ] ; then
-	echo "Usage: `basename ${0}` <file>"
+if [ "${#}" -lt 1 ] ; then
+	echo "Usage: `basename ${0}` <file> ..."
 	exit 1
 fi
 
-im_input="${1}"
+for im_input in "${@}" ; do
 
-## TODO: this is common for all the scripts
-if [ ! -f "${im_input}" ] ; then
-	echo "Input file not found: '${im_input}'" >&2
-	exit 2
-fi
+	if [ ! -f "${im_input}" ] ; then
+		echo "Input file not found: '${im_input}'" >&2
+	
+	else
+		kernel=`echo "${im_input}" | rev | cut -f 2- -d . | rev`
 
-kernel=`echo "${im_input}" | rev | cut -f 2- -d . | rev`
+		out_orig="${kernel}_0_orig.${out_format}"
+		out_norm="${kernel}_1_norm.${out_format}"
+		out_gama="${kernel}_2_gama.${out_format}"
+		out_enhc="${kernel}_3_enhc.${out_format}"
+		out_eqlz="${kernel}_4_eqlz.${out_format}"
+		out_gray="${kernel}_5_gray.${out_format}"
+		out_mono="${kernel}_6_mono.${out_format}"
 
-out_format="png"
+		convert "${im_input}" 				"${out_orig}" &
+		convert "${im_input}" -normalize 		"${out_norm}" &
+		convert "${im_input}" -auto-gamma 		"${out_gama}" &
+		convert "${im_input}" -enhance 			"${out_enhc}" &
+		convert "${im_input}" -equalize 		"${out_eqlz}" &
+		convert "${im_input}" -intensity "Lightness" 	"${out_gray}" &
+		convert "${im_input}" -monochrome 		"${out_mono}" &
+		wait
 
-    out_orig="${kernel}_1_orig.${out_format}"
-      out_ng="${kernel}_2_ng.${out_format}"
-   out_ng_eq="${kernel}_3_ng_eq.${out_format}"
-   out_ng_en="${kernel}_4_ng_en.${out_format}"
-   out_ng_gs="${kernel}_5_ng_gs.${out_format}"
-out_ng_gs_eq="${kernel}_6_ng_gs_nq.${out_format}"
- out_ng_mono="${kernel}_7_ng_mono.${out_format}"
+		echo "File '${im_input}' processed."
+	fi
 
-convert "${im_input}" "${out_orig}"
-convert "${out_orig}" -normalize -auto-gamma "${out_ng}"
-convert "${out_ng}" -equalize "${out_ng_eq}"
-convert "${out_ng}" -colorspace gray "${out_ng_gs}"
-convert "${out_ng}" -enhance "${out_ng_en}"
-convert "${out_ng_gs}" -equalize "${out_ng_gs_eq}"
-convert "${out_ng}" -monochrome "${out_ng_mono}"
+done
